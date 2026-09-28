@@ -1,0 +1,87 @@
+# Changelog
+
+Notable changes to ShrinkCode — the Claude Skill plus its bundled measurement
+tooling. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
+versions are the skill package versions.
+
+## 2.0.0 — 2026-09-28
+
+The release that turns "make this codebase smaller" into a measured,
+checkpointed pipeline with an optional always-on guard.
+
+### Added
+
+- **JS/TS structural analysis** — `scripts/js_analyze.mjs` parses JS/TS/JSX/TSX
+  with Babel and detects renamed-identifier / stripped-literal duplicates plus
+  per-function complexity: exactly the class of copy-paste the text pass misses.
+  `find_duplicates.py` and `complexity_report.py` pick its output up
+  automatically and fall back to the text pass when Node or the optional
+  `@babel/parser` + `@babel/traverse` dependencies are absent.
+- **Opt-in deep scan** — `find_duplicates.py --canonicalize` folds commutative
+  operand order, symmetric comparisons, independent-statement order and the
+  loop-vs-array-chain spelling before fingerprinting, while deliberately keeping
+  member names, operators and control flow outside the exact accumulator idiom
+  distinct. Measured at +19% runtime on 23 JS files / 48k lines, hence opt-in.
+- **Coverage-gap characterization tests** — `scripts/coverage_gap_scaffold.py`
+  finds functions with zero coverage (coverage.py or lcov) and emits runnable
+  pytest / vitest / jest stubs that pin existing behavior *before* it is
+  compressed, for the code no existing test protects.
+- **The always-on guard** — `scripts/ci_diff_report.py` plus
+  `.github/workflows/shrinkcode.yml` and `.github/shrinkcode-comment-sync.js`
+  post one PR comment (found by the hidden `<!-- shrinkcode-bot -->` marker and
+  edited in place, never spammed) with the LOC / duplication / complexity delta
+  for the files that PR touched. Comment-only by default;
+  `ci.failOnRegression` or a manual dispatch opts into failing the check.
+- **HTML before/after report** — `scripts/generate_report.py` renders one
+  self-contained file (no scripts, no network): metric cards, proportional bars,
+  the batch table, and what was deliberately left alone.
+- **Parallel Tier-1 batches** — `scripts/partition_batches.py` reads a
+  `plan.json` and splits independent Tier-1 changes into non-conflicting groups
+  (same file, shared duplicate cluster, target inside another change's cluster,
+  Tier 2/3, undeclared files all defer, with the reason recorded), plus
+  `references/parallel-execution.md` covering the conflict model and the
+  mandatory full-suite serial re-verification at the end.
+- **Hard-language guides** — `references/rust.md`, `go.md`, `java-kotlin.md`,
+  `csharp.md`, `cpp.md`, each with its own "careful with" section.
+- **Config file support** — `shrinkcode.config.json` (excludes, duplication and
+  complexity thresholds, test/coverage commands, risk overrides, target
+  reduction, `ci.failOnRegression`), loaded by `scripts/shrinkcode_config.py`
+  and honored by every script. Still zero-config by default;
+  `shrinkcode.config.example.json` documents the schema.
+
+### Changed
+
+- Duplicate and complexity reports display every path relative to the scan root,
+  so the JS/TS analyzer's absolute paths no longer mix with the Python pass's
+  relative ones in one list.
+- `references/metrics-and-tooling.md` documents each metric and each tool's
+  blind spots, the deep-scan decision with its measurements, and a verified
+  sample PR comment.
+- `plan.json` joined the plan template as the machine-readable companion to the
+  markdown compression plan.
+
+### Fixed
+
+- Piped stdout on Windows (cp1252) raised `UnicodeEncodeError` on the non-Latin-1
+  glyphs the reports use (`Δ`, `↳`) — a hard crash, not mojibake. All CLI scripts
+  now call the shared `utf8_stdout()` guard from `shrinkcode_config.py`.
+- Metric snapshots written by PowerShell (`Out-File`) carry a UTF-8 BOM; the JSON
+  loaders read `utf-8-sig` so a BOM can never break a `--diff`.
+
+### Decided (documented, not built)
+
+- A semantic/embedding duplicate pass was evaluated and deliberately not added:
+  the canonicalized AST scan caught every target case in the acceptance fixtures
+  at +19% runtime, with unrelated same-shape controls scoring ≤0.30 against the
+  0.85 threshold. An embeddings dependency would add an install, a model
+  download and per-block inference for no demonstrated JS/TS gap. The exact
+  conditions that would justify building it are recorded in
+  `references/metrics-and-tooling.md`.
+
+## 1.0.0 — initial release
+
+The original six-phase skill: analyze / baseline / plan / execute / verify /
+report, with `loc_report.py`, `find_duplicates.py`, `complexity_report.py`,
+`dead_code_scan.sh`, `checkpoint.sh`, the tiered risk model, the verification and
+git-workflow references, and the language guides for Python, TypeScript/JS,
+React/Next.js, HTML/CSS, Vue/Svelte and Node backends.

@@ -1,0 +1,41 @@
+{
+  "_comment": "shrinkcode.config.example.json — copy to shrinkcode.config.json at your project root. Every field is optional; scripts work identically with no config file present. Strict JSON: use _comment sibling keys for inline notes on OBJECTS only (no // comments; never put _comment strings inside arrays, they would be read as values). Precedence: explicit CLI flag > this file > built-in defaults.",
+
+  "_comment.excludePaths": "glob patterns every bundled script skips (generated code, vendored deps, migrations). Examples below.",
+  "excludePaths": [
+    "generated/**",
+    "vendor/**",
+    "node_modules",
+    "*.min.js",
+    "**/migrations/**"
+  ],
+
+  "_comment.commands": "how to run tests/coverage for this project, so Phase 2/5 verification and coverage_gap_scaffold.py don't have to guess or ask every time.",
+  "testCommand": "pytest -q",
+  "coverageCommand": "coverage run -m pytest && coverage json -o coverage.json",
+
+  "duplication": {
+    "_comment": "defaults for find_duplicates.py / js_analyze.mjs; --min-lines / --similarity CLI flags still override these",
+    "minLines": 5,
+    "similarity": 0.85
+  },
+
+  "complexity": {
+    "_comment": "functions scoring above warnThreshold are flagged in reports (same '1 + decision points' scale for Python and JS/TS)",
+    "warnThreshold": 10
+  },
+
+  "_comment.riskOverrides": "force listed paths to at-least the given tier (1/2/3) regardless of what static analysis suggests — safety valve for teams who know their own risk areas (e.g. payments never auto-classified Tier 1).",
+  "riskOverrides": [
+    { "pattern": "payments/**", "tier": 2 },
+    { "pattern": "**/auth/**", "tier": 3 }
+  ],
+
+  "_comment.targetReductionPercent": "optional; used by references/compression-plan-template.md to state upfront whether the target looks achievable",
+  "targetReductionPercent": 30,
+
+  "ci": {
+    "_comment": "consumed by scripts/ci_diff_report.py + .github/workflows/shrinkcode.yml; default is comment-only, never failing the check — bloat going up shouldn't block a merge unless the team opts in",
+    "failOnRegression": false
+  }
+}

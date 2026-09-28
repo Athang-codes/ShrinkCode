@@ -1,0 +1,52 @@
+ShrinkCode — Skill Content License (CC BY 4.0)
+==============================================
+
+The skill content of this repository is licensed under the Creative Commons
+Attribution 4.0 International License (CC BY 4.0).
+
+  License deed (human-readable): https://creativecommons.org/licenses/by/4.0/
+  Full legal code:               https://creativecommons.org/licenses/by/4.0/legalcode
+
+Copyright (c) 2026 Athang-codes
+
+What this covers
+----------------
+- `SKILL.md` — the skill definition an agent loads
+- `references/**` — the language, workflow, verification and tooling guides
+- the prose in `README.md` and `CHANGELOG.md`
+
+What this does not cover
+------------------------
+- The executable code is MIT-licensed (see `LICENSE`): `scripts/**`,
+  `.github/workflows/shrinkcode.yml` and `.github/shrinkcode-comment-sync.js`.
+- Third-party dependencies (`@babel/parser`, `@babel/traverse` and their
+  transitive dependencies) keep their own licenses. They are installed from npm
+  at use time and are not redistributed here.
+
+You are free to
+---------------
+- **Share** — copy and redistribute the material in any medium or format.
+- **Adapt** — remix, transform and build upon the material for any purpose,
+  even commercially.
+
+Under the following terms
+-------------------------
+- **Attribution** — You must give appropriate credit, provide a link to the
+  license, and indicate if changes were made. You may do so in any reasonable
+  manner, but not in any way that suggests the licensor endorses you or your
+  use of the work.
+- **No additional restrictions** — You may not apply legal terms or
+  technological measures that legally restrict others from doing anything the
+  license permits.
+
+Required attribution notice
+---------------------------
+When you redistribute or adapt this skill, include something like:
+
+  ShrinkCode (https://github.com/Athang-codes/ShrinkCode) by Athang-codes,
+  licensed under CC BY 4.0
+  (https://creativecommons.org/licenses/by/4.0/). Changes were made.
+
+No warranties are given. The license may not give you all of the permissions
+necessary for your intended use; other rights such as publicity, privacy or
+moral rights may limit how you use the material.

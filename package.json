@@ -1,0 +1,28 @@
+{
+  "name": "shrinkcode",
+  "version": "2.0.0",
+  "description": "Skill that compresses bloated codebases without changing behavior, with bundled measurement tooling and a test-verified, git-checkpointed change pipeline.",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://github.com/Athang-codes/ShrinkCode#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Athang-codes/ShrinkCode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Athang-codes/ShrinkCode/issues"
+  },
+  "keywords": [
+    "claude-skill",
+    "claude-code",
+    "refactoring",
+    "codebase-compression",
+    "code-duplication",
+    "dead-code",
+    "cyclomatic-complexity"
+  ],
+  "devDependencies": {
+    "@babel/parser": "^8.0.6",
+    "@babel/traverse": "^8.0.6"
+  }
+}

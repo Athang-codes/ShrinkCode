@@ -1,0 +1,21 @@
+# Line endings: keep every text file LF, in the repository *and* in the working
+# copy. The bundled shell scripts, Python and Node entry points run under bash
+# or an interpreter where CRLF endings cause real failures (a clone on Windows
+# would otherwise get CRLF in scripts/*.sh and fail with "$'\r': command not
+# found"). .gitattributes overrides core.autocrlf.
+* text=auto eol=lf
+
+# Explicit, for anyone reading this file instead of the rule above.
+*.sh   text eol=lf
+*.py   text eol=lf
+*.mjs  text eol=lf
+*.js   text eol=lf
+*.yml  text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+
+# Binary artifacts: never touch.
+*.png binary
+*.jpg binary
+*.ico binary
+*.gif binary

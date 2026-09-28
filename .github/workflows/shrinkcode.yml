@@ -1,0 +1,86 @@
+# shrinkcode: continuous bloat prevention (v2, prompt #3)
+#
+# Every PR gets one comment with LOC / complexity / duplication deltas for the
+# files it changed. The comment is found by the hidden `<!-- shrinkcode-bot -->`
+# marker and updated in place, so pushes never spam a new comment.
+#
+# Default is comment-only: metrics going up never fails the check on its own.
+# Opt into strict mode either by running this workflow manually with
+# strict=true, or by setting `ci.failOnRegression: true` in
+# shrinkcode.config.json (the script reads it).
+#
+# Note for forks: pull_request runs from forks get a read-only GITHUB_TOKEN,
+# so commenting there fails while the report still prints in the job log.
+
+name: shrinkcode
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail the check when LOC / duplication / complexity regress"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bloat-report:
+    runs-on: ubuntu-latest
+    steps:
+      # Full history so the diff against the base branch has a merge base.
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node (for the JS/TS analyzer)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install JS analyzer dependencies (optional)
+        run: |
+          if [ -f scripts/js_analyze.mjs ]; then
+            npm install @babel/parser @babel/traverse --no-save --prefix . \
+              || echo "::warning::JS analyzer deps unavailable — report runs without JS/TS AST detection"
+          fi
+
+      - name: Generate bloat report
+        id: report
+        env:
+          # Comment-only by default; strict only on an explicit workflow input
+          # (or ci.failOnRegression in shrinkcode.config.json, read by the
+          # script itself). The body is written before the exit code, so the
+          # comment step below still posts when strict mode fails.
+          STRICT_FLAG: ${{ (github.event_name == 'workflow_dispatch' && inputs.strict == true) && '--fail-on-regression' || '' }}
+        run: |
+          python3 scripts/ci_diff_report.py \
+            --base "origin/${{ github.base_ref || github.ref_name }}" \
+            --head HEAD \
+            --output shrinkcode-comment.md \
+            $STRICT_FLAG
+
+      # runs even when strict mode failed the previous step: the report still
+      # deserves to be posted (the failure itself shows on the check).
+      - name: Post or update the PR comment
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await require('./.github/shrinkcode-comment-sync.js')({
+              github, context, core, bodyPath: 'shrinkcode-comment.md',
+            });
+
+      - name: Show the report in the job log
+        if: ${{ always() && github.event_name != 'pull_request' }}
+        run: cat shrinkcode-comment.md
