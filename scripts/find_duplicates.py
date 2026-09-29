@@ -31,12 +31,12 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
 from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from shrinkcode_config import load_config, matches_exclude, resolve, utf8_stdout
+from shrinkcode_config import (display_path, load_config, matches_exclude,
+                               resolve, run_js_analyzer, utf8_stdout)
 
 SKIP_DIRS = {
     "node_modules", ".git", "dist", "build", ".next", "__pycache__",
@@ -149,36 +149,20 @@ def load_windows(path, min_lines, mask_literals):
     return windows
 
 
-def display_path(path):
-    """The text pass reports paths relative to the scanned root while
-    js_analyze.mjs reports absolute ones; showing both shapes in one list reads
-    like a bug. Make absolute paths that live under the cwd relative, and leave
-    relative paths byte-identical to pre-v2 output."""
-    text = str(path)
-    if not os.path.isabs(text):
-        return text
-    try:
-        rel = os.path.relpath(text)
-    except ValueError:            # different drive on Windows
-        return text
-    return text if rel.startswith("..") else rel
-
-
 JS_EXTS = {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"}
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def run_js_analyzer(path, min_lines, similarity, exclude_patterns, canonicalize=False):
-    """Shell out to js_analyze.mjs for AST-level JS/TS duplicate detection.
+def ast_duplicate_clusters(path, min_lines, similarity, exclude_patterns,
+                           canonicalize=False):
+    """AST-level JS/TS duplicate clusters, or None when the pass can't run.
 
-    Returns the parsed JSON ({exact_clusters, near_pairs}) or None when Node
-    or the analyzer's deps aren't available — caller degrades to a hint
-    instead of crashing. `canonicalize` turns on the opt-in deep pass (statement
-    order + loop/array-pipeline spelling folded together).
+    Runs js_analyze.mjs `--mode duplicates` through the shared runner in
+    shrinkcode_config.py (one UTF-8 decode point for all analyzer calls) and
+    returns its {exact_clusters, near_pairs} payload — or None when the target
+    has no JS/TS, or Node/the analyzer's deps are missing, so the caller can
+    degrade to a hint instead of crashing. `canonicalize` turns on the opt-in
+    deep pass (statement order + loop/array-pipeline spelling folded together).
     """
-    script = os.path.join(SCRIPT_DIR, "js_analyze.mjs")
-    if not os.path.isfile(script):
-        return None
     has_js = False
     if os.path.isfile(path):
         has_js = os.path.splitext(path)[1] in JS_EXTS
@@ -188,21 +172,12 @@ def run_js_analyzer(path, min_lines, similarity, exclude_patterns, canonicalize=
             break
     if not has_js:
         return None
-    cmd = ["node", script, path, "--mode", "duplicates",
-           "--min-lines", str(min_lines), "--similarity", str(similarity)]
+    args = [path, "--mode", "duplicates",
+            "--min-lines", str(min_lines), "--similarity", str(similarity)]
     if canonicalize:
-        cmd.append("--canonicalize")
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-        return None
-    if proc.returncode != 0:
-        return None
-    try:
-        data = json.loads(proc.stdout)
-    except (json.JSONDecodeError, ValueError):
-        return None
-    return data.get("duplicates")
+        args.append("--canonicalize")
+    data = run_js_analyzer(args)
+    return None if data is None else data.get("duplicates")
 
 
 def merge_clusters(text_clusters, ast_clusters):
@@ -282,7 +257,8 @@ def main():
     exact_clusters.sort(key=lambda locs: -len(locs))
 
     # --- AST-based structural pass for JS/TS (unified into this report) ---
-    js_result = run_js_analyzer(args.path, min_lines, similarity, exclude, args.canonicalize)
+    js_result = ast_duplicate_clusters(args.path, min_lines, similarity, exclude,
+                                       args.canonicalize)
     if js_result is not None:
         exact_clusters = merge_clusters(exact_clusters, js_result.get("exact_clusters", []))
     elif not args.json and not os.path.isfile(args.path) and any(

@@ -34,14 +34,12 @@ import ast
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from shrinkcode_config import load_config, matches_exclude, utf8_stdout
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+from shrinkcode_config import (load_config, matches_exclude, run_js_analyzer,
+                               utf8_stdout)
 
 TODO_MARKER = "TODO(shrinkcode): run this once, record the ACTUAL output below as the pinned expected value - never invent an expected value"
 TODO_COMMENT = f"# {TODO_MARKER}"
@@ -403,25 +401,20 @@ def detect_js_runner(target):
 
 
 def js_functions_via_analyzer(target):
-    """Call js_analyze.mjs --mode functions; return list | None if unavailable."""
-    node = shutil.which("node") or shutil.which("node.exe")
-    script = os.path.join(SCRIPT_DIR, "js_analyze.mjs")
-    if not node or not os.path.isfile(script):
-        return None
-    cmd = [node, script, target, "--mode", "functions"]
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    if proc.returncode != 0:
+    """Call js_analyze.mjs --mode functions; return list | None if unavailable.
+
+    The analyzer call goes through the shared runner in shrinkcode_config.py,
+    so stdout is always decoded as UTF-8 (non-ASCII function names and paths
+    survive on a cp1252 console) and Node resolution happens in one place.
+    """
+    def show_failure(_hint, stderr):
         print("(js_analyze.mjs --mode functions failed — run "
               "`npm install` in the skill folder. stderr follows)")
-        print((proc.stderr or "")[-1500:])
-        return None
-    try:
-        return json.loads(proc.stdout).get("functions", [])
-    except (ValueError, AttributeError):
-        return None
+        print((stderr or "")[-1500:])
+
+    data = run_js_analyzer([target, "--mode", "functions"],
+                           on_error=show_failure)
+    return None if data is None else data.get("functions", [])
 
 
 def uncovered_js_functions(functions, entry):

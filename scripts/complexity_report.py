@@ -27,9 +27,8 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from shrinkcode_config import load_config, matches_exclude, utf8_stdout
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+from shrinkcode_config import (display_path, load_config, matches_exclude,
+                               run_js_analyzer, utf8_stdout)
 
 SKIP_DIRS = {
     "node_modules", ".git", "dist", "build", ".next", "__pycache__",
@@ -180,22 +179,15 @@ def detect_hard_languages(root):
 def analyze_js_ts(path, exclude_patterns=None):
     """Run js_analyze.mjs over the target and return merged complexity entries.
 
-    Returns [] when Node or the analyzer's deps are unavailable (caller then
-    falls back to the external-tool hint rather than crashing).
+    Returns None when the target has no JS/TS, or when Node / the analyzer's
+    @babel deps are unavailable (caller then falls back to the external-tool
+    hint rather than crashing). The analyzer call itself goes through the
+    shared runner in shrinkcode_config.py, which decodes its stdout as UTF-8.
     """
-    script = os.path.join(SCRIPT_DIR, "js_analyze.mjs")
-    if not os.path.isfile(script) or not has_js_ts(path):
+    if not has_js_ts(path):
         return None
-    cmd = ["node", script, path, "--mode", "complexity"]
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-        return None
-    if proc.returncode != 0:
-        return None
-    try:
-        data = json.loads(proc.stdout)
-    except (json.JSONDecodeError, ValueError):
+    data = run_js_analyzer([path, "--mode", "complexity"])
+    if data is None:
         return None
     entries = data.get("complexity", {}).get("per_function", [])
     if exclude_patterns:
@@ -204,20 +196,6 @@ def analyze_js_ts(path, exclude_patterns=None):
                                           if os.path.isdir(path) else e["file"],
                                           exclude_patterns)]
     return entries
-
-
-def display_path(path):
-    """Same reason as find_duplicates.display_path: the Python walk reports
-    relative paths, js_analyze.mjs reports absolute ones. Normalize only the
-    absolute ones, so Python-only output stays byte-identical to pre-v2."""
-    text = str(path)
-    if not os.path.isabs(text):
-        return text
-    try:
-        rel = os.path.relpath(text)
-    except ValueError:
-        return text
-    return text if rel.startswith("..") else rel
 
 
 def summarize(results):

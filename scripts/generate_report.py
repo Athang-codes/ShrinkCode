@@ -38,7 +38,7 @@ import sys
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from shrinkcode_config import utf8_stdout  # noqa: E402  (path setup above)
+from shrinkcode_config import display_path, utf8_stdout  # noqa: E402  (path setup above)
 
 # Tier names/colors match the Mechanical/Structural/Semantic tier system
 # (references/risk-classification.md) — same badges, same meaning, everywhere.
@@ -123,20 +123,6 @@ def load_complexity(path):
         "total": totals.get("total_complexity"),
         "functions": totals.get("functions"),
     }
-
-
-def display_path(path):
-    """Locations arrive in two shapes — relative from the text pass, absolute
-    from js_analyze.mjs — and a mixed list looks like a bug. Normalize only the
-    absolute ones (relative paths are already what the user expects)."""
-    text = str(path)
-    if not os.path.isabs(text):
-        return text
-    try:
-        rel = os.path.relpath(text)
-    except ValueError:
-        return text
-    return text if rel.startswith("..") else rel
 
 
 def load_duplicates(path):
