@@ -305,7 +305,7 @@ single-language task:
 
 ---
 
-ShrinkCode 2.0.0 — this skill content (`SKILL.md`, `references/`) is licensed
+ShrinkCode 2.0.1 — this skill content (`SKILL.md`, `references/`) is licensed
 **CC BY 4.0**: reuse, adapt and redistribute it, including commercially, with
 attribution (see `LICENSE-SKILL`). The bundled scripts in `scripts/` are MIT
 (see `LICENSE`). Source: <https://github.com/Athang-codes/ShrinkCode>

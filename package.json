@@ -1,6 +1,6 @@
 {
   "name": "shrinkcode",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Skill that compresses bloated codebases without changing behavior, with bundled measurement tooling and a test-verified, git-checkpointed change pipeline.",
   "private": true,
   "license": "MIT",

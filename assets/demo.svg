@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="748" viewBox="0 0 880 748" role="img" aria-label="shrinkcode terminal demo: duplicate detection, complexity and selftest output">
+<title>shrinkcode — real output of the bundled tools</title>
+<style>
+  text { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+         "Liberation Mono", "Courier New", monospace; font-size: 13.5px; }
+  .prompt { fill: #7ee787; } .cmd { fill: #e6edf3; font-weight: 600; }
+  .dim { fill: #8b949e; } .head { fill: #e3b341; }
+  .path { fill: #79c0ff; } .num { fill: #d2a8ff; } .pass { fill: #3fb950; font-weight: 600; }
+  .bar { fill: #161b22; } .lbl { fill: #8b949e; font-size: 12.5px; }
+  .foot { fill: #6e7681; font-size: 12.5px; }
+</style>
+<rect x="0.5" y="0.5" width="879" height="747" rx="12" fill="#0d1117" stroke="#30363d"/>
+<path d="M0 12 A12 12 0 0 1 12 0 H868 A12 12 0 0 1 880 12 V44 H0 Z" fill="#161b22"/>
+<line x1="0" y1="44" x2="880" y2="44" stroke="#30363d"/>
+<circle cx="22" cy="22" r="6" fill="#ff5f56"/>
+<circle cx="42" cy="22" r="6" fill="#ffbd2e"/>
+<circle cx="62" cy="22" r="6" fill="#27c93f"/>
+<text class="lbl" x="440" y="26" text-anchor="middle">shrinkcode — real output of the bundled tools (fixtures/ ships with the repo)</text>
+<text x="24" y="70"><tspan class="prompt">$ </tspan><tspan class="cmd">python3 scripts/find_duplicates.py fixtures/jsproj --min-lines 5</tspan></text>
+<text x="24" y="91"><tspan class="dim">Scanned 21 candidate blocks (min 5 lines) across files under fixtures/jsproj</tspan></text>
+<text x="24" y="133"><tspan class="head">=== Exact duplicate clusters (1 found) ===</tspan></text>
+<text x="24" y="154"><tspan class="dim">  2x duplicate block:</tspan></text>
+<text x="24" y="175"><tspan class="path">    fixtures/jsproj/twins.js:2</tspan></text>
+<text x="24" y="196"><tspan class="path">    fixtures/jsproj/twins.js:12</tspan></text>
+<text x="24" y="238"><tspan class="head">=== Near-duplicate pairs &gt;= 0.85 similarity (7 found, 210 pairs compared) ===</tspan></text>
+<text x="24" y="259"><tspan class="num">  0.98  </tspan><tspan class="path">fixtures/jsproj/twins.js:15</tspan><tspan class="dim">  &lt;-&gt;  </tspan><tspan class="path">fixtures/jsproj/twins.js:16</tspan></text>
+<text x="24" y="280"><tspan class="num">  0.98  </tspan><tspan class="path">fixtures/jsproj/twins.js:5</tspan><tspan class="dim">   &lt;-&gt;  </tspan><tspan class="path">fixtures/jsproj/twins.js:6</tspan></text>
+<text x="24" y="301"><tspan class="num">  0.95  </tspan><tspan class="path">fixtures/jsproj/complexity.js:5</tspan><tspan class="dim">  &lt;-&gt;  </tspan><tspan class="path">fixtures/jsproj/complexity.js:6</tspan></text>
+<text x="24" y="322"><tspan class="num">  0.93  </tspan><tspan class="path">fixtures/jsproj/twins.js:3</tspan><tspan class="dim">   &lt;-&gt;  </tspan><tspan class="path">fixtures/jsproj/twins.js:4</tspan></text>
+<text x="24" y="343"><tspan class="num">  0.93  </tspan><tspan class="path">fixtures/jsproj/twins.js:13</tspan><tspan class="dim">  &lt;-&gt;  </tspan><tspan class="path">fixtures/jsproj/twins.js:14</tspan></text>
+<text x="24" y="364"><tspan class="num">  0.91  </tspan><tspan class="path">fixtures/jsproj/twins.js:4</tspan><tspan class="dim">   &lt;-&gt;  </tspan><tspan class="path">fixtures/jsproj/twins.js:14</tspan></text>
+<text x="24" y="385"><tspan class="num">  0.88  </tspan><tspan class="path">fixtures/jsproj/twins.js:3</tspan><tspan class="dim">   &lt;-&gt;  </tspan><tspan class="path">fixtures/jsproj/twins.js:13</tspan></text>
+<text x="24" y="427"><tspan class="prompt">$ </tspan><tspan class="cmd">python3 scripts/complexity_report.py fixtures/jsproj</tspan></text>
+<text x="24" y="448"><tspan class="dim">Functions analyzed: 3 (3 JS/TS)</tspan></text>
+<text x="24" y="469"><tspan class="dim">Total complexity: 12  Average: 4.0  Max: 4</tspan></text>
+<text x="24" y="511"><tspan class="dim">Top 15 most complex functions:</tspan></text>
+<text x="24" y="532"><tspan class="num">    4  </tspan><tspan class="path">fixtures/jsproj/complexity.js:2  </tspan><tspan class="dim">score</tspan></text>
+<text x="24" y="553"><tspan class="num">    4  </tspan><tspan class="path">fixtures/jsproj/twins.js:2  </tspan><tspan class="dim">validateUser</tspan></text>
+<text x="24" y="574"><tspan class="num">    4  </tspan><tspan class="path">fixtures/jsproj/twins.js:12  </tspan><tspan class="dim">checkAdministrator</tspan></text>
+<text x="24" y="616"><tspan class="prompt">$ </tspan><tspan class="cmd">python3 scripts/selftest.py</tspan></text>
+<text x="24" y="637"><tspan class="dim">environment: js analyzer ON · git yes · bash yes</tspan></text>
+<text x="24" y="658"><tspan class="pass">PASS  </tspan><tspan class="dim">dup: jsproj (text pass / AST) — exact=1 (want 1), near=7 (want 7)</tspan></text>
+<text x="24" y="679"><tspan class="pass">PASS  </tspan><tspan class="dim">complexity: non-ASCII identifier survives (no cp1252 crash) — rc=0 analyzer=on</tspan></text>
+<text x="24" y="700"><tspan class="pass">44 passed, 0 failed, 0 skipped</tspan></text>
+<text class="foot" x="24" y="727">every command above runs from a fresh clone — python3 scripts/selftest.py exits 0 or the skill is not working</text>
+</svg>

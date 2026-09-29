@@ -8,6 +8,10 @@ honored, the plan partitioner accepts/rejects the right plans, the HTML report
 stays self-contained, the CI report degrades on first run, and non-ASCII
 identifiers survive the Node analyzer on a cp1252 Windows console.
 
+The release asset is pinned too: `package_skill.py` must produce a ZIP rooted at
+`shrinkcode/` with `SKILL.md` inside it, and two builds of the same tree must be
+byte-identical — that layout is what the claude.ai uploader accepts.
+
     python3 scripts/selftest.py          # from the skill root (any OS)
 
 Exit code 0 = everything usable (skips allowed for genuinely optional
@@ -18,6 +22,7 @@ print under the failing line.
 Everything runs in temp directories — the skill tree is never written to, so
 this is safe to run before every push.
 """
+import hashlib
 import json
 import os
 import re
@@ -25,6 +30,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(ROOT, "scripts")
@@ -599,6 +605,54 @@ def test_dead_code_scan():
           rc == 0 and "Done." in (out + err), f"rc={rc} {(out + err)[:160]}")
 
 
+def test_packaging(tmp):
+    """The release asset contract — claude.ai rejects anything else.
+
+    An archive whose root folder name disagrees with the skill's frontmatter
+    `name`, or that puts `SKILL.md` at the ZIP root, fails to upload. Pin both,
+    plus reproducibility, so a release asset is never hand-built twice.
+    """
+    def digest(path):
+        with open(path, "rb") as fh:
+            return hashlib.sha256(fh.read()).hexdigest()
+
+    folder = os.path.basename(ROOT)
+    with open(os.path.join(ROOT, "SKILL.md"), encoding="utf-8") as fh:
+        front = fh.read().split("\n---", 1)[0]
+    declared = ""
+    for line in front.splitlines():
+        if line.startswith("name:"):
+            declared = line.split(":", 1)[1].strip()
+    check("package: skill name matches its folder and frontmatter",
+          declared and declared == folder, f"frontmatter={declared!r} folder={folder!r}")
+
+    first, second = os.path.join(tmp, "dist-a"), os.path.join(tmp, "dist-b")
+    rc, _, err = run_py("package_skill.py", "--output", first)
+    rc2, _, err2 = run_py("package_skill.py", "--output", second)
+    zip_path = os.path.join(first, f"{folder}.zip")
+    skill_path = os.path.join(first, f"{folder}.skill")
+    if not (rc == 0 and rc2 == 0 and os.path.isfile(zip_path)
+            and os.path.isfile(skill_path)):
+        check("package: release asset builds", False,
+              f"rc={rc}/{rc2} {err[:100] or err2[:100]}")
+        return
+
+    with zipfile.ZipFile(zip_path) as zf:
+        names = zf.namelist()
+        corrupt = zf.testzip()
+    cruft = tuple(d for d in ("node_modules", "__pycache__", ".git", "dev"))
+    leaked = [n for n in names if any(f"/{d}/" in n for d in cruft)]
+    check("package: archive is rooted at the skill name with SKILL.md inside",
+          (not corrupt and f"{folder}/SKILL.md" in names
+           and all(n.startswith(f"{folder}/") for n in names) and not leaked),
+          f"{len(names)} files, corrupt={corrupt}, leaked={leaked[:2]}")
+
+    check("package: repeat builds are byte-identical",
+          digest(zip_path) == digest(skill_path)
+          == digest(os.path.join(second, f"{folder}.zip")),
+          f"sha256={digest(zip_path)[:16]}…")
+
+
 def test_hygiene():
     """Nothing published may carry a machine-specific path or local name."""
     git = probe("git")
@@ -653,6 +707,7 @@ def main():
         test_comment_sync()
         test_coverage_scaffold(tmp)
         test_dead_code_scan()
+        test_packaging(tmp)
         test_hygiene()
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

@@ -4,6 +4,44 @@ Notable changes to ShrinkCode — the Claude Skill plus its bundled measurement
 tooling. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are the skill package versions.
 
+## 2.0.1 — 2026-09-29
+
+Packaging and documentation polish: nothing about how the skill compresses code
+changed, so this release is a drop-in replacement for 2.0.0 — but installing it
+no longer involves assembling anything by hand.
+
+### Added
+
+- **`shrinkcode.zip` release asset** — the whole skill as one ready-to-upload
+  file, with `shrinkcode/` at the archive root and `SKILL.md` inside it, which is
+  the layout claude.ai's uploader requires (it rejects an archive whose root
+  folder name doesn't match the skill's frontmatter `name`, or that has
+  `SKILL.md` at the ZIP root). `shrinkcode.skill` ships alongside it with
+  identical bytes.
+- **`scripts/package_skill.py`** — builds and validates that asset from the
+  committed tree: it checks the `SKILL.md` frontmatter, excludes VCS/build/OS
+  cruft and the maintainer-only `dev/` notes, roots the archive at the skill
+  name, then re-opens the result to prove the layout. Deterministic output
+  (sorted entries, fixed timestamps), so the same commit always rebuilds to the
+  same bytes.
+- **`assets/demo.svg`** — a terminal capture of the bundled tools' real output
+  (the `fixtures/jsproj` duplicate clusters, the complexity ranking, and the
+  selftest summary), used at the top of the README.
+- **A copy-paste GitHub Action** — the README now carries a self-contained
+  workflow that checks the tooling out under `node_modules/shrinkcode` (every
+  metric walker skips `node_modules/`, so the tooling never shows up in its own
+  report) and posts or updates the bloat comment on the PR.
+- **Packaging pins in `scripts/selftest.py`** — three new checks: the skill name
+  matches its folder and frontmatter, the built archive is a ZIP rooted at
+  `shrinkcode/` with `SKILL.md` inside and no excluded directories, and two
+  rebuilds are byte-identical.
+
+### Changed
+
+- **README** — the first line is now the install: download the release asset,
+  upload it in claude.ai or unzip it into a Claude Code skills directory.
+- **Repo page** — description and topics, and the demo capture above the fold.
+
 ## 2.0.0 — 2026-09-28
 
 The release that turns "make this codebase smaller" into a measured,

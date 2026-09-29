@@ -33,6 +33,10 @@ coverage-final.json
 
 # --- packaged skill archives ---
 *.skill
+*.zip
+# ...except the archive the release uploads, built on demand by
+# scripts/package_skill.py (never committed — see the release notes)
+dist/
 
 # --- local development notes (not part of the published skill) ---
 dev/

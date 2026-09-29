@@ -1,5 +1,11 @@
 # shrinkcode
 
+![shrinkcode in a terminal: it finds the duplicate twins, ranks the worst functions, and proves itself with its own selftest — real output of the bundled tools](assets/demo.svg)
+
+**Install:** **[download `shrinkcode.zip`](https://github.com/Athang-codes/ShrinkCode/releases/latest)
+→ upload it in claude.ai, or unzip it into `~/.claude/skills/` for Claude
+Code.** One file, no build step, nothing to configure.
+
 A Claude Skill that compresses bloated codebases into fewer lines — **without
 changing behavior.** Same inputs, same outputs, same edge cases, same error
 handling, same ordering guarantees. Just leaner code, proven with real
@@ -78,6 +84,7 @@ scripts/
 ├── dead_code_scan.sh         # auto-detects stack, runs the right dead-code tool
 ├── checkpoint.sh             # git branch + per-batch commit/revert discipline
 ├── selftest.py               # one-command self-test — runs every tool on fixtures/
+├── package_skill.py          # builds the release asset (shrinkcode.zip + .skill)
 └── shrinkcode_config.py      # shared config loader (shrinkcode.config.json)
 
 .github/
@@ -85,6 +92,7 @@ scripts/
 └── shrinkcode-comment-sync.js # finds/updates the single shrinkcode PR comment
 
 fixtures/                     # small curated inputs for scripts/selftest.py
+assets/                       # demo.svg — the terminal capture above
 ```
 
 Try them standalone, right now, on any project:
@@ -105,7 +113,62 @@ python3 scripts/selftest.py
 
 ## Use it as a GitHub Action
 
-`.github/workflows/shrinkcode.yml` runs on `pull_request` (and on demand via
+**Copy-paste this into `.github/workflows/shrinkcode.yml` in your own repo** —
+it's self-contained: it pulls the tooling in beside your code (under
+`node_modules/`, which every metric walker skips, so it never skews the report)
+and posts the bloat report as a PR comment.
+
+```yaml
+name: shrinkcode
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bloat-report:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) the PR under test — full history so the base diff has a merge base
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # 2) the shrinkcode tooling, checked out beside your code
+      - uses: actions/checkout@v4
+        with:
+          repository: Athang-codes/ShrinkCode
+          path: node_modules/shrinkcode
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: JS/TS analyzer dependencies (optional — metrics also run without them)
+        run: npm install --no-save --prefix node_modules/shrinkcode || true
+      - name: Generate the bloat report
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          python3 node_modules/shrinkcode/scripts/ci_diff_report.py \
+            --base "origin/${BASE_REF}" --head HEAD \
+            --output shrinkcode-comment.md
+      - name: Post or update the PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await require('./node_modules/shrinkcode/.github/shrinkcode-comment-sync.js')({
+              github, context, core, bodyPath: 'shrinkcode-comment.md',
+            });
+```
+
+This repo's own workflow, `.github/workflows/shrinkcode.yml`, runs on
+`pull_request` (and on demand via
 `workflow_dispatch` with a `strict` input) and needs no configuration:
 
 - it checks out with `fetch-depth: 0`, sets up Python + Node, and runs
@@ -140,9 +203,29 @@ an annotated example: `shrinkcode.config.example.json` and
 
 ## Install
 
-Drop the `shrinkcode/` folder — or the packaged `shrinkcode.skill` file —
-into your Claude Skills directory, or upload it directly in claude.ai /
-Claude Code. Then just ask Claude to shrink, compress, or de-bloat a project.
+**Download the ready-to-upload package:**
+[`shrinkcode.zip`](https://github.com/Athang-codes/ShrinkCode/releases/latest)
+— it is the whole skill in one file, with `shrinkcode/` at the archive root,
+which is exactly what the uploader requires (a ZIP whose root folder name
+doesn't match the skill name is rejected). The same bytes are also attached as
+`shrinkcode.skill` for tooling that expects that extension.
+
+Where it goes:
+
+- **claude.ai** — upload the ZIP (Settings → Capabilities → Skills), then enable
+  it under **Customize → Skills**. Skills are per-user, so each teammate adds it.
+- **Claude Code** — unzip it so the files land in `~/.claude/skills/shrinkcode/`
+  (or `.claude/skills/shrinkcode/` to scope it to one project), or copy the
+  `shrinkcode/` folder from this repo to the same place.
+- **Claude API / Agent SDK** — upload it to your workspace's Skills, so everyone
+  in the workspace gets it.
+
+Then just ask Claude to shrink, compress, or de-bloat a project.
+
+Rebuilding the package from source (maintainers): `python3 scripts/package_skill.py`
+validates `SKILL.md` frontmatter, writes `dist/shrinkcode.zip` + `dist/shrinkcode.skill`,
+and re-opens the archive to prove the layout. It is deterministic — the same
+commit always produces the same bytes.
 
 ## Structure
 
@@ -151,12 +234,14 @@ shrinkcode/
 ├── SKILL.md                          # the six-phase workflow
 ├── scripts/                          # the tools above (incl. the selftest)
 ├── fixtures/                         # curated inputs the selftest runs against
+├── assets/                           # demo.svg — the terminal capture above
 ├── shrinkcode.config.example.json    # optional config, every field annotated
 ├── package.json                      # only for the JS/TS analyzer's @babel deps
 ├── .github/
 │   ├── workflows/shrinkcode.yml      # the PR bloat guard
+│   ├── workflows/selftest.yml        # this repo's own selftest, on every push
 │   └── shrinkcode-comment-sync.js    # single-comment find/update (idempotent)
-├── CHANGELOG.md                      # what changed in 2.0.0
+├── CHANGELOG.md                      # what changed, per release
 ├── LICENSE                           # MIT — the scripts and the workflow
 ├── LICENSE-SKILL                     # CC BY 4.0 — SKILL.md and references/
 └── references/
