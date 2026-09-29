@@ -43,6 +43,14 @@ checkpointed pipeline with an optional always-on guard.
   mandatory full-suite serial re-verification at the end.
 - **Hard-language guides** — `references/rust.md`, `go.md`, `java-kotlin.md`,
   `csharp.md`, `cpp.md`, each with its own "careful with" section.
+- **One-command self-test** — `scripts/selftest.py` runs every bundled tool
+  against the curated inputs in `fixtures/` and pins the behavior the docs
+  promise: metrics, duplicate clusters (text + AST + `--canonicalize`),
+  `excludePaths` honoring, partition acceptance scenarios, the self-contained
+  HTML report, the two-commit CI report, comment-sync idempotency, coverage
+  stubs, and non-ASCII survival on a cp1252 console. Optional prerequisites
+  (Node, git, bash) skip cleanly instead of failing; exit 0 means the skill
+  works. `fixtures/README.md` documents each directory.
 - **Config file support** — `shrinkcode.config.json` (excludes, duplication and
   complexity thresholds, test/coverage commands, risk overrides, target
   reduction, `ci.failOnRegression`), loaded by `scripts/shrinkcode_config.py`
@@ -67,6 +75,15 @@ checkpointed pipeline with an optional always-on guard.
   now call the shared `utf8_stdout()` guard from `shrinkcode_config.py`.
 - Metric snapshots written by PowerShell (`Out-File`) carry a UTF-8 BOM; the JSON
   loaders read `utf-8-sig` so a BOM can never break a `--diff`.
+- The JS/TS analyzer's stdout was decoded with the *locale* encoding
+  (`text=True`): on a cp1252 Windows console that raised `UnicodeDecodeError`
+  on the first byte cp1252 leaves undefined (Japanese identifiers, emoji
+  paths) or silently mojibaked every non-ASCII path — which then defeated the
+  path-prefix match and printed absolute paths beside relative ones. All
+  analyzer call sites now go through one `run_js_analyzer()` helper that
+  forces UTF-8, resolves `node` with `shutil.which`, and returns only object
+  payloads so callers can `.get()` unguarded. Pinned by the emoji fixture in
+  `scripts/selftest.py`.
 
 ### Decided (documented, not built)
 

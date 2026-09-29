@@ -1,0 +1,45 @@
+# shrinkcode: verify the skill itself
+#
+# Runs scripts/selftest.py against the curated fixtures/ on every push and PR,
+# so a change to any bundled script that quietly breaks documented behavior
+# turns this check red here instead of in a user's session. Node-dependent pins
+# skip cleanly if the analyzer dependencies can't be installed, so this stays
+# green on a runner without npm access rather than failing for a missing
+# optional extra.
+
+name: selftest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node (for the JS/TS analyzer pins)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install JS analyzer dependencies (optional)
+        run: |
+          if [ -f package.json ]; then
+            npm install --no-save || echo "::warning::analyzer deps unavailable — AST pins skip"
+          fi
+
+      - name: Run the selftest
+        run: python3 scripts/selftest.py

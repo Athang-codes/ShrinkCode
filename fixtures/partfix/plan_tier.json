@@ -1,0 +1,36 @@
+{
+  "project": "partfix/tiers",
+  "note": "Tier-1 change with no cluster info (blind spot warning), a tier-2, a tier-3 and a tier-1 with no files declared (independence unprovable).",
+  "changes": [
+    {
+      "id": 20,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_x.py"],
+      "description": "merge the two identical formatters",
+      "estLinesSaved": 4
+    },
+    {
+      "id": 21,
+      "category": "abstraction",
+      "tier": 2,
+      "files": ["factory.py"],
+      "description": "collapse the one-implementation factory",
+      "estLinesSaved": 30
+    },
+    {
+      "id": 22,
+      "category": "async-order",
+      "tier": 3,
+      "files": ["api/handler.py"],
+      "description": "sequential awaits -> gather (changes fail-fast semantics)",
+      "estLinesSaved": 8
+    },
+    {
+      "id": 23,
+      "category": "boilerplate",
+      "tier": 1,
+      "description": "plan entry that forgot to declare its files"
+    }
+  ]
+}

@@ -28,6 +28,8 @@ coverage.json
 coverage.xml
 lcov.info
 coverage-final.json
+# ...except the committed fixture snapshot the selftest feeds back in
+!fixtures/**/coverage.json
 
 # --- packaged skill archives ---
 *.skill

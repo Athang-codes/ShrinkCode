@@ -1,0 +1,39 @@
+{
+  "project": "partfix/repo",
+  "note": "Acceptance scenario for prompt #8: three modules with no shared imports, each with one Tier-1 duplicate-merge opportunity. Real cluster refs came from `find_duplicates.py repo --min-lines 5 --json`; lines are 1-based.",
+  "changes": [
+    {
+      "id": 1,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_a.py"],
+      "description": "drop the duplicate helper _render_pair, call _format_pair",
+      "target": "mod_a.py:14",
+      "duplicateCluster": ["mod_a.py:5", "mod_a.py:14"],
+      "estLinesSaved": 5,
+      "verification": "python3 -m pytest tests/ (module has no other callers)"
+    },
+    {
+      "id": 2,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_b.py"],
+      "description": "drop the duplicate helper _clamp_hi, call _clamp_low",
+      "target": "mod_b.py:13",
+      "duplicateCluster": ["mod_b.py:4", "mod_b.py:13"],
+      "estLinesSaved": 6,
+      "verification": "python3 -m pytest tests/"
+    },
+    {
+      "id": 3,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_c.py"],
+      "description": "drop the duplicate helper _normalize_words, call _slug_words",
+      "target": "mod_c.py:14",
+      "duplicateCluster": ["mod_c.py:5", "mod_c.py:14"],
+      "estLinesSaved": 6,
+      "verification": "python3 -m pytest tests/"
+    }
+  ]
+}

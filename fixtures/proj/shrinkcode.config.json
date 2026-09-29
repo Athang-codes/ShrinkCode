@@ -1,0 +1,6 @@
+{
+  "_comment": "Fixture config: prove every script honors excludePaths from shrinkcode.config.json (vendor/ must vanish from every report on fixtures/proj while still being a real duplicate of src/app.py's helper).",
+  "excludePaths": [
+    "vendor/**"
+  ]
+}

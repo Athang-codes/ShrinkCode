@@ -1,0 +1,50 @@
+{
+  "project": "partfix/repo",
+  "note": "plan3.json plus a 4th Tier-1 change in mod_a.py — the same file change #1 already claimed. Must NOT land in the same parallel group.",
+  "changes": [
+    {
+      "id": 1,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_a.py"],
+      "description": "drop the duplicate helper _render_pair, call _format_pair",
+      "target": "mod_a.py:14",
+      "duplicateCluster": ["mod_a.py:5", "mod_a.py:14"],
+      "estLinesSaved": 5,
+      "verification": "python3 -m pytest tests/"
+    },
+    {
+      "id": 2,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_b.py"],
+      "description": "drop the duplicate helper _clamp_hi, call _clamp_low",
+      "target": "mod_b.py:13",
+      "duplicateCluster": ["mod_b.py:4", "mod_b.py:13"],
+      "estLinesSaved": 6,
+      "verification": "python3 -m pytest tests/"
+    },
+    {
+      "id": 3,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_c.py"],
+      "description": "drop the duplicate helper _normalize_words, call _slug_words",
+      "target": "mod_c.py:14",
+      "duplicateCluster": ["mod_c.py:5", "mod_c.py:14"],
+      "estLinesSaved": 6,
+      "verification": "python3 -m pytest tests/"
+    },
+    {
+      "id": 4,
+      "category": "dead-code",
+      "tier": 1,
+      "files": ["./mod_a.py"],
+      "description": "remove the now-unused describe_alt wrapper in the same file as change #1",
+      "target": "mod_a.py:21",
+      "duplicateCluster": ["mod_a.py:5", "mod_a.py:14"],
+      "estLinesSaved": 2,
+      "verification": "grep-confirmed zero refs + python3 -m pytest tests/"
+    }
+  ]
+}

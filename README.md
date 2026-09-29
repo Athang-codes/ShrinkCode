@@ -77,11 +77,14 @@ scripts/
 ├── partition_batches.py      # optional: split plan.json into independent Tier-1 batches
 ├── dead_code_scan.sh         # auto-detects stack, runs the right dead-code tool
 ├── checkpoint.sh             # git branch + per-batch commit/revert discipline
+├── selftest.py               # one-command self-test — runs every tool on fixtures/
 └── shrinkcode_config.py      # shared config loader (shrinkcode.config.json)
 
 .github/
 ├── workflows/shrinkcode.yml  # the PR bloat guard (runs ci_diff_report.py)
 └── shrinkcode-comment-sync.js # finds/updates the single shrinkcode PR comment
+
+fixtures/                     # small curated inputs for scripts/selftest.py
 ```
 
 Try them standalone, right now, on any project:
@@ -95,6 +98,9 @@ bash scripts/dead_code_scan.sh /path/to/project
 
 # the PR bloat report, locally, exactly as CI runs it:
 python3 scripts/ci_diff_report.py --base origin/main --head HEAD --output comment.md
+
+# verify the skill itself against its bundled fixtures (exit 0 = all good):
+python3 scripts/selftest.py
 ```
 
 ## Use it as a GitHub Action
@@ -143,7 +149,8 @@ Claude Code. Then just ask Claude to shrink, compress, or de-bloat a project.
 ```
 shrinkcode/
 ├── SKILL.md                          # the six-phase workflow
-├── scripts/                          # the tools above
+├── scripts/                          # the tools above (incl. the selftest)
+├── fixtures/                         # curated inputs the selftest runs against
 ├── shrinkcode.config.example.json    # optional config, every field annotated
 ├── package.json                      # only for the JS/TS analyzer's @babel deps
 ├── .github/

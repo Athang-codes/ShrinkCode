@@ -1,0 +1,32 @@
+{
+  "project": "partfix/cluster",
+  "note": "Different files, but the blocks are copies of each other — the conflict rule prompt #8 calls out. A and B share a cluster member; C targets a block inside that cluster.",
+  "changes": [
+    {
+      "id": 10,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_x.py"],
+      "description": "merge mod_x's copy into shared.py's helper",
+      "target": "mod_x.py:3",
+      "duplicateCluster": ["shared.py:10", "mod_x.py:3"]
+    },
+    {
+      "id": 11,
+      "category": "dedup",
+      "tier": 1,
+      "files": ["mod_y.py"],
+      "description": "merge mod_y's copy into shared.py's helper",
+      "target": "mod_y.py:8",
+      "duplicateCluster": ["shared.py:10", "mod_y.py:8"]
+    },
+    {
+      "id": 12,
+      "category": "dead-code",
+      "tier": 1,
+      "files": ["mod_z.py"],
+      "description": "delete the unused wrapper around shared.py:10",
+      "target": {"path": "shared.py", "line": 10}
+    }
+  ]
+}

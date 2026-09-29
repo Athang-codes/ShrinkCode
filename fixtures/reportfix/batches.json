@@ -1,0 +1,23 @@
+[
+  {
+    "sha": "9f2c1ab7d3e4f5061728394a5b6c7d8e9f0a1b2c",
+    "category": "dedup",
+    "tier": 1,
+    "summary": "merged validate_user/validate_admin into validate_person(role)",
+    "verification": "pytest 42/42 pass, characterization tests for both callers pass"
+  },
+  {
+    "sha": "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d",
+    "category": "dead-code",
+    "tier": 1,
+    "summary": "removed duplicate util_b.py, kept the shared util.py",
+    "verification": "grep-confirmed zero remaining imports of util_b + test suite green"
+  },
+  {
+    "sha": "7c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f809",
+    "category": "abstraction",
+    "tier": 2,
+    "summary": "extracted shared greet() into a single module export",
+    "verification": "characterization test for greet() + full suite (judgment call: only one call site today)"
+  }
+]

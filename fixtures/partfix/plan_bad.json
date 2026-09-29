@@ -1,0 +1,9 @@
+{
+  "project": "partfix/bad",
+  "note": "Invalid on purpose: change 2 has no tier, and id 1 is reused. Must exit 2, never silently produce a partition.",
+  "changes": [
+    {"id": 1, "category": "dedup", "tier": 1, "files": ["mod_a.py"]},
+    {"id": 2, "category": "dedup", "files": ["mod_b.py"]},
+    {"id": 1, "category": "dedup", "tier": 1, "files": ["mod_c.py"]}
+  ]
+}
