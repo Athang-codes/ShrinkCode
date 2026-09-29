@@ -22,8 +22,10 @@ builds of the same commit are byte-identical (a rebuild is never a "change").
 
 Exit code 0 = `dist/shrinkcode.zip` + `dist/shrinkcode.skill` written and
 re-opened to prove the layout; 1 = the tree does not satisfy the skill contract
-(missing `SKILL.md`, missing frontmatter `name`/`description`, or a folder name
-that doesn't match the skill name — all three are upload-rejection causes).
+(missing `SKILL.md`, missing frontmatter `name`/`description`, or a `name` that
+cannot be a folder name — all upload-rejection causes). A checkout folder that
+disagrees with the skill name is only a note: GitHub checks the repo out as
+`ShrinkCode/`, and the archive root comes from the frontmatter either way.
 """
 import argparse
 import fnmatch
@@ -86,7 +88,14 @@ def read_frontmatter(skill_md_path):
 
 
 def validate_skill(skill_root):
-    """(ok, message) — the uploader's rules, applied before you upload."""
+    """(ok, message) — the uploader's rules, applied before you upload.
+
+    What the uploader validates is the *archive*: its root folder must be named
+    like the frontmatter `name` (see `build_archive` / `verify_archive`). The
+    folder this happens to run in is not part of that contract — GitHub checks
+    the repo out as `ShrinkCode/` and its ZIP download unpacks as
+    `ShrinkCode-main/` — so a mismatch here is a note, not a failure.
+    """
     folder = os.path.basename(os.path.abspath(skill_root))
     skill_md = os.path.join(skill_root, SKILL_MD)
     if not os.path.isfile(skill_md):
@@ -99,11 +108,14 @@ def validate_skill(skill_root):
         return False, "frontmatter has no `name`"
     if not VALID_NAME.fullmatch(name):
         return False, f"invalid characters in skill name: {name!r}"
-    if name != folder:
-        return False, (f"folder name {folder!r} does not match the skill name "
-                       f"{name!r} — claude.ai rejects that upload")
+    note = ""
+    if name.lower() != folder.lower():
+        note = (f"checkout folder {folder!r} differs from the skill name"
+                f" — the archive is still rooted at {name}/ (fine)")
     if not fm["has_description"]:
         return False, "frontmatter has no `description`"
+    if note:
+        return True, f"skill {name!r}: frontmatter ok ({note})"
     return True, f"skill {name!r}: frontmatter ok, folder name matches"
 
 

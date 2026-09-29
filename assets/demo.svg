@@ -41,6 +41,6 @@
 <text x="24" y="637"><tspan class="dim">environment: js analyzer ON · git yes · bash yes</tspan></text>
 <text x="24" y="658"><tspan class="pass">PASS  </tspan><tspan class="dim">dup: jsproj (text pass / AST) — exact=1 (want 1), near=7 (want 7)</tspan></text>
 <text x="24" y="679"><tspan class="pass">PASS  </tspan><tspan class="dim">complexity: non-ASCII identifier survives (no cp1252 crash) — rc=0 analyzer=on</tspan></text>
-<text x="24" y="700"><tspan class="pass">44 passed, 0 failed, 0 skipped</tspan></text>
+<text x="24" y="700"><tspan class="pass">45 passed, 0 failed, 0 skipped</tspan></text>
 <text class="foot" x="24" y="727">every command above runs from a fresh clone — python3 scripts/selftest.py exits 0 or the skill is not working</text>
 </svg>

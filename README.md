@@ -142,6 +142,7 @@ jobs:
         with:
           repository: Athang-codes/ShrinkCode
           path: node_modules/shrinkcode
+          # ref: v2.0.1     # uncomment to pin the tooling to a release
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -224,8 +225,13 @@ Then just ask Claude to shrink, compress, or de-bloat a project.
 
 Rebuilding the package from source (maintainers): `python3 scripts/package_skill.py`
 validates `SKILL.md` frontmatter, writes `dist/shrinkcode.zip` + `dist/shrinkcode.skill`,
-and re-opens the archive to prove the layout. It is deterministic — the same
-commit always produces the same bytes.
+and re-opens the archive to prove the layout. It runs from any clone — the checkout
+folder name doesn't matter, the archive root comes from the frontmatter — and it
+is deterministic: the same commit always produces the same bytes.
+
+Each release lists the asset's sha256, and that same command rebuilds it from a
+release's own commit, so you can check what you downloaded before uploading
+it anywhere.
 
 ## Structure
 

@@ -10,7 +10,7 @@ identifiers survive the Node analyzer on a cp1252 Windows console.
 
 The release asset is pinned too: `package_skill.py` must produce a ZIP rooted at
 `shrinkcode/` with `SKILL.md` inside it, and two builds of the same tree must be
-byte-identical — that layout is what the claude.ai uploader accepts.
+byte-identical regardless of the checkout folder name — that is the layout the uploader accepts.
 
     python3 scripts/selftest.py          # from the skill root (any OS)
 
@@ -610,27 +610,28 @@ def test_packaging(tmp):
 
     An archive whose root folder name disagrees with the skill's frontmatter
     `name`, or that puts `SKILL.md` at the ZIP root, fails to upload. Pin both,
-    plus reproducibility, so a release asset is never hand-built twice.
+    plus reproducibility and independence from the checkout folder name, so a
+    release asset is never hand-built twice.
     """
     def digest(path):
         with open(path, "rb") as fh:
             return hashlib.sha256(fh.read()).hexdigest()
 
-    folder = os.path.basename(ROOT)
+    name = "shrinkcode"          # the published skill name (SKILL.md frontmatter)
     with open(os.path.join(ROOT, "SKILL.md"), encoding="utf-8") as fh:
         front = fh.read().split("\n---", 1)[0]
     declared = ""
     for line in front.splitlines():
         if line.startswith("name:"):
             declared = line.split(":", 1)[1].strip()
-    check("package: skill name matches its folder and frontmatter",
-          declared and declared == folder, f"frontmatter={declared!r} folder={folder!r}")
+    check("package: frontmatter name is the published skill name",
+          declared == name, f"frontmatter name={declared!r}")
 
     first, second = os.path.join(tmp, "dist-a"), os.path.join(tmp, "dist-b")
     rc, _, err = run_py("package_skill.py", "--output", first)
     rc2, _, err2 = run_py("package_skill.py", "--output", second)
-    zip_path = os.path.join(first, f"{folder}.zip")
-    skill_path = os.path.join(first, f"{folder}.skill")
+    zip_path = os.path.join(first, f"{name}.zip")
+    skill_path = os.path.join(first, f"{name}.skill")
     if not (rc == 0 and rc2 == 0 and os.path.isfile(zip_path)
             and os.path.isfile(skill_path)):
         check("package: release asset builds", False,
@@ -643,14 +644,37 @@ def test_packaging(tmp):
     cruft = tuple(d for d in ("node_modules", "__pycache__", ".git", "dev"))
     leaked = [n for n in names if any(f"/{d}/" in n for d in cruft)]
     check("package: archive is rooted at the skill name with SKILL.md inside",
-          (not corrupt and f"{folder}/SKILL.md" in names
-           and all(n.startswith(f"{folder}/") for n in names) and not leaked),
+          (not corrupt and f"{name}/SKILL.md" in names
+           and all(n.startswith(f"{name}/") for n in names) and not leaked),
           f"{len(names)} files, corrupt={corrupt}, leaked={leaked[:2]}")
 
     check("package: repeat builds are byte-identical",
           digest(zip_path) == digest(skill_path)
-          == digest(os.path.join(second, f"{folder}.zip")),
+          == digest(os.path.join(second, f"{name}.zip")),
           f"sha256={digest(zip_path)[:16]}…")
+
+
+    # The checkout folder is not part of the upload contract: GitHub's ZIP
+    # download unpacks as `ShrinkCode-main/`, CI checks out `ShrinkCode/`. The
+    # archive root has to come from the frontmatter regardless.
+    renamed = os.path.join(tmp, "ShrinkCode-main")
+    os.makedirs(os.path.join(renamed, "references"))
+    shutil.copyfile(os.path.join(ROOT, "SKILL.md"),
+                    os.path.join(renamed, "SKILL.md"))
+    with open(os.path.join(renamed, "references", "note.md"), "w",
+              encoding="utf-8") as fh:
+        fh.write("# placeholder\n")
+    rc3, _, err3 = run_py("package_skill.py", "--repo", renamed,
+                          "--output", os.path.join(tmp, "dist-c"))
+    renamed_zip = os.path.join(tmp, "dist-c", f"{name}.zip")
+    renamed_names = []
+    if rc3 == 0 and os.path.isfile(renamed_zip):
+        with zipfile.ZipFile(renamed_zip) as zf:
+            renamed_names = zf.namelist()
+    check("package: a renamed checkout still packages into <name>/",
+          bool(renamed_names) and f"{name}/SKILL.md" in renamed_names
+          and all(n.startswith(f"{name}/") for n in renamed_names),
+          f"rc={rc3} entries={renamed_names[:3] or err3[:80]}")
 
 
 def test_hygiene():

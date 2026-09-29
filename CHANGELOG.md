@@ -4,6 +4,20 @@ Notable changes to ShrinkCode — the Claude Skill plus its bundled measurement
 tooling. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are the skill package versions.
 
+## Unreleased
+
+### Fixed
+
+- **`scripts/package_skill.py` now runs in a checkout with any folder name** — it
+  used to refuse a tree whose folder name disagreed with the skill name, which
+  was never part of the upload contract (the *archive root* is, and that comes
+  from the frontmatter). GitHub checks the repo out as `ShrinkCode/`, so the
+  packager and the packaging pins failed there. A mismatch is a note now, and
+  `scripts/selftest.py` pins the renamed case: a `ShrinkCode-main/` ZIP download
+  must still package into `shrinkcode/`. The 2.0.1 asset was built from its tag
+  before this fix, so rebuilding *that* tag still wants a checkout named
+  `shrinkcode/` — the release notes carry the one-line command.
+
 ## 2.0.1 — 2026-09-29
 
 Packaging and documentation polish: nothing about how the skill compresses code
